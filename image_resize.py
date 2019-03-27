@@ -37,6 +37,13 @@ def get_args():
     return args_dict
 
 
+def get_image(path_to_image_file):
+    try:
+        return Image.open(path_to_image_file)
+    except IOError:
+        return
+
+
 def resize_image(original_image, height, width, scale):
     original_image_ratio = original_image.height / original_image.width
 
@@ -60,21 +67,34 @@ def resize_image(original_image, height, width, scale):
     return result_image
 
 
-def get_path_to_result(original_image, result_image):
-    original_image_basename, original_image_ext = os.path.splitext(
-        original_image.filename
-    )
-    result_image_basename = original_image_basename + '_{}x{}'.format(
-        result_image.width, result_image.height
-    )
-    return result_image_basename + original_image_ext
+def get_path_to_result(original_image, result_image, path_to_result_from_args):
+    if path_to_result_from_args and os.path.isdir(
+            os.path.dirname(path_to_result_from_args)
+    ):
+        return path_to_result_from_args
+    else:
+        original_image_basename, original_image_ext = os.path.splitext(
+            original_image.filename
+        )
+        result_image_basename = original_image_basename + '_{}x{}'.format(
+            result_image.width, result_image.height
+        )
+        return result_image_basename + original_image_ext
+
+
+def save_image_to_file(image, path_to_save):
+    try:
+        image.save(path_to_save)
+        return 'Image has been saved to {}'.format(path_to_save)
+    except ValueError:
+        return 'Incorrect path to save'
 
 
 if __name__ == '__main__':
     args = get_args()
-    try:
-        original_image = Image.open(args['input'])
-    except IOError:
+
+    original_image = get_image(args['input'])
+    if not original_image:
         sys.exit('Incorrect image file')
 
     result_image = resize_image(
@@ -83,10 +103,12 @@ if __name__ == '__main__':
         width=args['width'],
         scale=args['scale'],
     )
-    path_to_result = args['output']
 
-    if not path_to_result:
-        path_to_result = get_path_to_result(original_image, result_image)
+    path_to_result = get_path_to_result(
+        original_image,
+        result_image,
+        args['output'],
+    )
 
     original_ratio = round(original_image.width / original_image.height, 2)
     result_ratio = round(result_image.width / result_image.height, 2)
@@ -94,7 +116,4 @@ if __name__ == '__main__':
     if original_ratio != result_ratio:
         print("width and height ratio has changed")
 
-    try:
-        result_image.save(path_to_result)
-    except ValueError:
-        sys.exit('Incorrect path to save')
+    print(save_image_to_file(result_image, path_to_result))
