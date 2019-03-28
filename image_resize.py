@@ -22,10 +22,7 @@ def get_args():
     args = parser.parse_args()
 
     if all([args.scale, any([args.height, args.width])]):
-        raise argparse.ArgumentParser.error(
-            parser,
-            message='Do not use width/height and scale simultaneously'
-        )
+        parser.error('Do not use width/height and scale simultaneously')
 
     args_dict = {'height': args.height,
                  'width': args.width,
@@ -76,10 +73,12 @@ def get_path_to_result(original_image, result_image, path_to_result_from_args):
         original_image_basename, original_image_ext = os.path.splitext(
             original_image.filename
         )
-        result_image_basename = original_image_basename + '_{}x{}'.format(
-            result_image.width, result_image.height
+        result_image_basename = '{}_{}x{}'.format(
+            original_image_basename,
+            result_image.width,
+            result_image.height
         )
-        return result_image_basename + original_image_ext
+        return '{}{}'.format(result_image_basename, original_image_ext)
 
 
 def save_image_to_file(image, path_to_save):
