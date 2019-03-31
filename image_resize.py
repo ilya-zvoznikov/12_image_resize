@@ -21,17 +21,23 @@ def get_args():
 
     args = parser.parse_args()
 
-    if all([args.scale, any([args.height, args.width])]):
+    if not any((args.height, args.width, args.scale, args.output)):
+        parser.error("No arguments specified")
+    elif all((args.scale, any((args.height, args.width)))):
         parser.error('Do not use width/height and scale simultaneously')
+    elif not (args.height is None) and args.height <= 0 or not (
+            args.width is None) and args.width <= 0 or not (
+            args.scale is None) and args.scale <= 0:
+        parser.error('Incorrect values of arguments')
+    else:
+        args_dict = {'height': args.height,
+                     'width': args.width,
+                     'scale': args.scale,
+                     'output': args.output,
+                     'input': args.input,
+                     }
 
-    args_dict = {'height': args.height,
-                 'width': args.width,
-                 'scale': args.scale,
-                 'output': args.output,
-                 'input': args.input,
-                 }
-
-    return args_dict
+        return args_dict
 
 
 def get_image(path_to_image_file):
@@ -66,9 +72,9 @@ def resize_image(original_image, height, width, scale):
 
 def get_path_to_result(original_image, result_image, path_to_result_from_args):
     if path_to_result_from_args and os.path.isdir(
-            os.path.dirname(path_to_result_from_args)
+            os.path.dirname(os.path.abspath(path_to_result_from_args))
     ):
-        return path_to_result_from_args
+        return os.path.abspath(path_to_result_from_args)
     else:
         original_image_basename, original_image_ext = os.path.splitext(
             original_image.filename
